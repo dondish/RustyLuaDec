@@ -1,0 +1,41 @@
+// Opcodes in Lua VM
+pub enum Opcode {
+    Move = 0,      // Copies a value between registers
+    LoadK = 1,     // Load a constant into a register
+    LoadBool = 2,  // Load a boolean into a register
+    LoadNil = 3,   // Load nil values into registers
+    GetUpval = 4,  // Read an upvalue into a register
+    GetGlobal = 5, // Read a global var into a register
+    GetTable = 6,  // Read a table element into a register
+    SetGlobal = 7, // Write a register val into a global var
+    SetUpval = 8,  // Write a register val into an upvalue
+    SetTable = 9,  // Write a register val into a table element
+    NewTable = 10, // Create a table
+    SelfOp = 11,   // Prepare an object method for calling
+    Add = 12,
+    Sub = 13,
+    Mul = 14,
+    Div = 15,
+    Mod = 16,
+    Pow = 17,
+    Unm = 18, // Unary Minus
+    Not = 19,
+    Len = 20,
+    Concat = 21,
+    Jmp = 22,
+    Eq = 23,
+    Lt = 24,
+    Le = 25,
+    Test = 26,     // Boolean test with conditional jump
+    TestSet = 27,  // Boolean test with conditional jump and assignment
+    Call = 28,     // Call a closure
+    TailCall = 29, // Perform a tail-call
+    Return = 30,
+    ForLoop = 31,  // iterate a numeric for loop
+    ForPrep = 32,  // prepare a numeric for loop
+    TForLoop = 33, // iterate a generic for loop
+    SetList = 34,  // set a range of array elements for a table
+    Close = 35,
+    Closure = 36,
+    VarArg = 37,
+}
