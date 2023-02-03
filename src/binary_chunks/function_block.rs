@@ -2,9 +2,9 @@ use modular_bitfield::{bitfield, specifiers::{B1, B2, B3}};
 
 #[bitfield(filled=false)]
 pub struct IsVarargFlag {
-    has_arg: B1,
-    is_vararg: B2,
-    needs_arg: B3
+    pub has_arg: B1,
+    pub is_vararg: B2,
+    pub needs_arg: B3
 }
 
 pub struct FunctionBlockChunk {
