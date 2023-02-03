@@ -1,10 +1,10 @@
-use std::io::{Read, self};
+use std::io::{self, Read};
 use std::mem::size_of;
 
 // Implements IO methods for efficiently reading common types
 pub struct StructIO {
     pub reader: Box<dyn Read>,
-    pub is_le: bool // The default endianness
+    pub is_le: bool, // The default endianness
 }
 
 macro_rules! read_type {
@@ -16,7 +16,6 @@ macro_rules! read_type {
                 Ok(<$type_>::from_le_bytes(buffer))
             } else {
                 Ok(<$type_>::from_be_bytes(buffer))
-
             }
         }
     };
@@ -37,7 +36,6 @@ macro_rules! read_type {
 }
 
 impl StructIO {
-
     pub fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
         self.reader.read(buf)
     }
@@ -45,8 +43,6 @@ impl StructIO {
     pub fn read_exact(&mut self, buf: &mut [u8]) -> io::Result<()> {
         self.reader.read_exact(buf)
     }
-
-
 
     // ----- Unsigned Int -----
 
@@ -143,5 +139,4 @@ impl StructIO {
 
     // reads a f32 using default endianness
     read_type!(read_f32, f32, default);
-
 }
