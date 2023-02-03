@@ -48,7 +48,7 @@ pub enum Opcode {
     Shr,        /* A B C   R[A] := R[B] >> R[C]                            */
     MmBin,      /* A B C   call C metamethod over R[A] and R[B]    (*)     */
     MmBinI,     /* A sB C k        call C metamethod over R[A] and sB      */
-    MmBiNK,     /* A B C k         call C metamethod over R[A] and K[B]    */
+    MmBinK,     /* A B C k         call C metamethod over R[A] and K[B]    */
     Unm,        /* A B     R[A] := -R[B]                                   */
     BNot,       /* A B     R[A] := ~R[B]                                   */
     Not,        /* A B     R[A] := not R[B]                                */
