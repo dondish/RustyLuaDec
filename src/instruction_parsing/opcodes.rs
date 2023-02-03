@@ -1,3 +1,4 @@
+#[derive(FromPrimitive)]
 // Opcodes in Lua VM
 pub enum Opcode {
     Move,       /* A B     R[A] := R[B]                                    */
@@ -82,6 +83,6 @@ pub enum Opcode {
     SetList,    /* A B C k R[A][C+i] := R[A+i], 1 <= i <= B                */
     Closure,    /* A Bx    R[A] := closure(KPROTO[Bx])                     */
     Vararg,     /* A C     R[A], R[A+1], ..., R[A+C-2] = vararg            */
-    VarargPrep, /*         (adjust vararg parameters)                      */
+    VarargPrep, /* A       (adjust vararg parameters)                      */
     Extraarg,   /* Ax      extra (larger) argument for previous opcode     */
 }

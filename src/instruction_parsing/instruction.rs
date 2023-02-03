@@ -1,3 +1,7 @@
+use nom::{error::ErrorKind, IResult, Needed};
+
+use super::{instruction_encodings::InstructionEncoding, opcodes::Opcode};
+
 // All VM instructions
 pub enum Instruction {
     Move(u8, u8),             /* A B     R[A] := R[B]                                    */
@@ -84,4 +88,65 @@ pub enum Instruction {
     Vararg(u8, u8),    /* A C     R[A], R[A+1], ..., R[A+C-2] = vararg            */
     VarargPrep(u8),    /* A        (adjust vararg parameters)                      */
     Extraarg(u32),     /* Ax      extra (larger) argument for previous opcode     */
+}
+
+/// A utility function to parse IABC encoded instructions
+fn handle_iabc(
+    input: &[u8],
+    f: impl Fn(&[u8], u8, u8, u8, u8) -> IResult<&[u8], Instruction>,
+) -> IResult<&[u8], Instruction> {
+    let (next_input, instruction) = InstructionEncoding::parse_iabc(input)?;
+    if let InstructionEncoding::IABC {
+        c,
+        b,
+        k,
+        a,
+        opcode: _,
+    } = instruction
+    {
+        f(next_input, c, b, k, a)
+    } else {
+        Err(nom::Err::Failure(nom::error::Error {
+            input,
+            code: ErrorKind::Fail,
+        }))
+    }
+}
+
+/// A utility function to parse IAsBx encoded instructions
+fn handle_iasbx(
+    input: &[u8],
+    f: impl Fn(&[u8], i32, u8) -> IResult<&[u8], Instruction>,
+) -> IResult<&[u8], Instruction> {
+    let (next_input, instruction) = InstructionEncoding::parse_iasbx(input)?;
+    if let InstructionEncoding::IAsBx { sbx, a, opcode: _ } = instruction {
+        f(next_input, sbx, a)
+    } else {
+        Err(nom::Err::Failure(nom::error::Error {
+            input,
+            code: ErrorKind::Fail,
+        }))
+    }
+}
+
+impl Instruction {
+    /// Parses an instruction
+    pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
+        if input.len() < 4 {
+            return Err(nom::Err::Incomplete(Needed::new(4)));
+        }
+        let opc = num::FromPrimitive::from_u8(input[0] & 0x7f);
+        match opc {
+            Some(Opcode::Move) => handle_iabc(input, move |next_input, _, b, _, a| {
+                Ok((next_input, Self::Move(a, b)))
+            }),
+            Some(Opcode::LoadI) => handle_iasbx(input, move |next_input, sbx, a| {
+                Ok((next_input, Self::LoadI(a, sbx)))
+            }),
+            _ => Err(nom::Err::Failure(nom::error::Error {
+                input,
+                code: ErrorKind::Fail,
+            })),
+        }
+    }
 }
