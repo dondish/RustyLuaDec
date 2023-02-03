@@ -59,7 +59,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_default_parsing_of_lua_5_1_header_chunk() {
+    fn test_default_parsing_of_lua_header_chunk() {
         let test_data = hex::decode("1B4C75615100010404040800").unwrap();
         let header_chunk: HeaderChunk = HeaderChunk::parse(&test_data).unwrap().1;
         assert_eq!(
