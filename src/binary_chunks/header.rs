@@ -1,4 +1,4 @@
-use nom::{IResult, combinator::map, sequence::tuple, bytes::complete::{tag, take}, number::complete::{be_u8, le_u64, le_f64}};
+use nom::{IResult, combinator::map, sequence::tuple, bytes::complete::tag, number::complete::{be_u8, le_u64, le_f64}};
 
 
 /**
