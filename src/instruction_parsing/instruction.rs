@@ -79,7 +79,7 @@ pub enum Instruction {
     Return1(u8),              /* A       return R[A]                                     */
     ForLoop(u8, u32),         /* A Bx    update counters; if loop continues then pc-=Bx; */
     ForPrep(u8, u32),         /* A Bx    <check values and prepare counters>;
-                              if not to run then pc+=Bx+1;                    */
+                              if not to run then pc+=Bx+1;                        */
     TForPrep(u8, u32), /* A Bx    create upvalue for R[A + 3]; pc+=Bx             */
     TForCall(u8, u8),  /* A C     R[A+4], ... ,R[A+3+C] := R[A](R[A+1], R[A+2]);  */
     TForLoop(u8, u32), /* A Bx    if R[A+2] ~= nil then { R[A]=R[A+2]; pc -= Bx } */
@@ -159,17 +159,15 @@ impl Instruction {
             Some(Opcode::LoadI) => handle_iasbx(input, move |next_input, sbx, a| {
                 Ok((next_input, Self::LoadI(a, sbx)))
             }),
-            Some(Opcode::LoadF) => handle_iasbx(input,|next_input, sbx, a| {
-                Ok((next_input, Self::LoadF(a, sbx as f64)))  // LoadF is only for floats that are integers
+            Some(Opcode::LoadF) => handle_iasbx(input, |next_input, sbx, a| {
+                Ok((next_input, Self::LoadF(a, sbx as f64))) // LoadF is only for floats that are integers
             }),
             Some(Opcode::LoadK) => handle_iabx(input, |next_input, bx, a| {
                 Ok((next_input, Self::LoadK(a, bx)))
-
             }),
-            Some(Opcode::LoadKx) => handle_iabx(input, |next_input, _, a| {
-                Ok((next_input, Self::LoadKx(a)))
-
-            }),
+            Some(Opcode::LoadKx) => {
+                handle_iabx(input, |next_input, _, a| Ok((next_input, Self::LoadKx(a))))
+            }
             Some(Opcode::LoadFalse) => handle_iabc(input, |next_input, _, _, _, a| {
                 Ok((next_input, Self::LoadFalse(a)))
             }),
