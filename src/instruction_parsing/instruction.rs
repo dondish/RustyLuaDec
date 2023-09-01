@@ -6,9 +6,9 @@ use super::{instruction_encodings::InstructionEncoding, opcodes::Opcode};
 pub enum Instruction {
     Move(u8, u8),             /* A B     R[A] := R[B]                                    */
     LoadI(u8, i32),           /* A sBx   R[A] := sBx                                     */
-    LoadF(u8, f32),           /* A sBx   R[A] := (lua_Number)sBx                         */
+    LoadF(u8, f64),           /* A sBx   R[A] := (lua_Number)sBx                         */
     LoadK(u8, u32),           /* A Bx    R[A] := K[Bx]                                   */
-    LoadKx(u8, u64),          /* A       R[A] := K[extra arg]                            */
+    LoadKx(u8),               /* A       R[A] := K[extra arg]                            */
     LoadFalse(u8),            /* A       R[A] := false                                   */
     LFalseSkip(u8),           /* A       R[A] := false; pc++     (*)                     */
     LoadTrue(u8),             /* A       R[A] := true                                    */
@@ -113,6 +113,22 @@ fn handle_iabc(
     }
 }
 
+/// A utility function to parse IABx encoded instructions
+fn handle_iabx(
+    input: &[u8],
+    f: impl Fn(&[u8], u32, u8) -> IResult<&[u8], Instruction>,
+) -> IResult<&[u8], Instruction> {
+    let (next_input, instruction) = InstructionEncoding::parse_iabx(input)?;
+    if let InstructionEncoding::IABx { bx, a, opcode: _ } = instruction {
+        f(next_input, bx, a)
+    } else {
+        Err(nom::Err::Failure(nom::error::Error {
+            input,
+            code: ErrorKind::Fail,
+        }))
+    }
+}
+
 /// A utility function to parse IAsBx encoded instructions
 fn handle_iasbx(
     input: &[u8],
@@ -142,6 +158,59 @@ impl Instruction {
             }),
             Some(Opcode::LoadI) => handle_iasbx(input, move |next_input, sbx, a| {
                 Ok((next_input, Self::LoadI(a, sbx)))
+            }),
+            Some(Opcode::LoadF) => handle_iasbx(input,|next_input, sbx, a| {
+                Ok((next_input, Self::LoadF(a, sbx as f64)))  // LoadF is only for floats that are integers
+            }),
+            Some(Opcode::LoadK) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::LoadK(a, bx)))
+
+            }),
+            Some(Opcode::LoadKx) => handle_iabx(input, |next_input, _, a| {
+                Ok((next_input, Self::LoadKx(a)))
+
+            }),
+            Some(Opcode::LoadFalse) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::LoadFalse(a)))
+            }),
+            Some(Opcode::LFalseSkip) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::LFalseSkip(a)))
+            }),
+            Some(Opcode::LoadTrue) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::LoadTrue(a)))
+            }),
+            Some(Opcode::LoadNil) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::LoadNil(a, b)))
+            }),
+            Some(Opcode::GetUpval) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::GetUpval(a, b)))
+            }),
+            Some(Opcode::SetUpval) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::SetUpval(a, b)))
+            }),
+            Some(Opcode::GetTabup) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::GetTabup(a, b, c)))
+            }),
+            Some(Opcode::GetTable) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::GetTable(a, b, c)))
+            }),
+            Some(Opcode::GetI) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::GetI(a, b, c)))
+            }),
+            Some(Opcode::GetField) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::GetField(a, b, c)))
+            }),
+            Some(Opcode::SetTabup) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::SetTabup(a, b, c)))
+            }),
+            Some(Opcode::SetTable) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::SetTable(a, b, c)))
+            }),
+            Some(Opcode::SetI) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::SetI(a, b, c)))
+            }),
+            Some(Opcode::SetField) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::SetField(a, b, c)))
             }),
             _ => Err(nom::Err::Failure(nom::error::Error {
                 input,
