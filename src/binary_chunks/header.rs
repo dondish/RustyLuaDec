@@ -1,5 +1,10 @@
-use nom::{IResult, combinator::map, sequence::tuple, bytes::complete::tag, number::complete::{be_u8, le_u64, le_f64}};
-
+use nom::{
+    bytes::complete::tag,
+    combinator::map,
+    number::complete::{be_u8, le_f64, le_u64},
+    sequence::tuple,
+    IResult,
+};
 
 /**
  * Version of a Lua 5 header block
@@ -14,7 +19,7 @@ impl From<u8> for HeaderVersion {
     fn from(value: u8) -> Self {
         Self {
             major: value >> 4,
-            minor: value & 0xF
+            minor: value & 0xF,
         }
     }
 }
@@ -31,21 +36,41 @@ pub struct HeaderChunk {
     pub size_of_lua_number: u8,
 }
 
-impl  HeaderChunk  {
+impl HeaderChunk {
     pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
-        map(tuple((tag("\x1BLua"), be_u8, be_u8, tag(b"\x19\x93\x0d\x0a\x1a\x0a"), be_u8, be_u8, be_u8, le_u64, le_f64)), 
-        |(_, version_number, format_version, _, size_of_int, size_of_size_t, size_of_lua_number, _, _)| {
-            HeaderChunk {
-                version_number: version_number.into(),
+        map(
+            tuple((
+                tag("\x1BLua"),
+                be_u8,
+                be_u8,
+                tag(b"\x19\x93\x0d\x0a\x1a\x0a"),
+                be_u8,
+                be_u8,
+                be_u8,
+                le_u64,
+                le_f64,
+            )),
+            |(
+                _,
+                version_number,
                 format_version,
+                _,
                 size_of_int,
                 size_of_size_t,
                 size_of_lua_number,
-            }
-        }
+                _,
+                _,
+            )| {
+                HeaderChunk {
+                    version_number: version_number.into(),
+                    format_version,
+                    size_of_int,
+                    size_of_size_t,
+                    size_of_lua_number,
+                }
+            },
         )(input)
     }
-
 }
 
 #[cfg(test)]
@@ -54,7 +79,9 @@ mod tests {
 
     #[test]
     fn test_default_parsing_of_lua_header_chunk() {
-        let test_data = hex::decode("1B4C7561540019930D0A1A0A0408087856000000000000000000000000287740").unwrap();
+        let test_data =
+            hex::decode("1B4C7561540019930D0A1A0A0408087856000000000000000000000000287740")
+                .unwrap();
         let header_chunk: HeaderChunk = HeaderChunk::parse(&test_data).unwrap().1;
         assert_eq!(
             HeaderChunk {
