@@ -291,6 +291,15 @@ impl Instruction {
             Some(Opcode::Shl) => handle_iabc(input, |next_input, c, b, _, a| {
                 Ok((next_input, Self::Shl(a, b, c)))
             }),
+            Some(Opcode::MmBin) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::MmBin(a, b, c)))
+            }),
+            Some(Opcode::MmBinI) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::MmBinI(a, b as i8, c, k)))
+            }),
+            Some(Opcode::MmBinK) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::MmBinK(a, b, c, k)))
+            }),
             _ => Err(nom::Err::Failure(nom::error::Error {
                 input,
                 code: ErrorKind::Fail,
