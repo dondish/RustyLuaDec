@@ -3,7 +3,7 @@ use nom::{error::ErrorKind, IResult, Needed};
 use super::{instruction_encodings::InstructionEncoding, opcodes::Opcode};
 
 // All VM instructions
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Instruction {
     Move(u8, u8),             /* A B     R[A] := R[B]                                    */
     LoadI(u8, i32),           /* A sBx   R[A] := sBx                                     */
@@ -177,6 +177,9 @@ fn handle_iax(
         }))
     }
 }
+fn make_signed(byte_reg: u8) -> i8 {
+    (byte_reg - 127) as i8
+}
 
 impl Instruction {
     /// Parses an instruction
@@ -250,7 +253,7 @@ impl Instruction {
                 Ok((next_input, Self::Self_(a, b, c)))
             }),
             Some(Opcode::AddI) => handle_iabc(input, |next_input, c, b, _, a| {
-                Ok((next_input, Self::AddI(a, b, c as i8)))
+                Ok((next_input, Self::AddI(a, b, make_signed(c))))
             }),
             Some(Opcode::AddK) => handle_iabc(input, |next_input, c, b, _, a| {
                 Ok((next_input, Self::AddK(a, b, c)))
@@ -283,10 +286,10 @@ impl Instruction {
                 Ok((next_input, Self::BXorK(a, b, c)))
             }),
             Some(Opcode::ShrI) => handle_iabc(input, |next_input, c, b, _, a| {
-                Ok((next_input, Self::ShrI(a, b, c as i8)))
+                Ok((next_input, Self::ShrI(a, b, make_signed(c))))
             }),
             Some(Opcode::ShlI) => handle_iabc(input, |next_input, c, b, _, a| {
-                Ok((next_input, Self::ShlI(a, b, c as i8)))
+                Ok((next_input, Self::ShlI(a, b, make_signed(c))))
             }),
             Some(Opcode::Add) => handle_iabc(input, |next_input, c, b, _, a| {
                 Ok((next_input, Self::Add(a, b, c)))
@@ -328,7 +331,7 @@ impl Instruction {
                 Ok((next_input, Self::MmBin(a, b, c)))
             }),
             Some(Opcode::MmBinI) => handle_iabc(input, |next_input, c, b, k, a| {
-                Ok((next_input, Self::MmBinI(a, b as i8, c, k)))
+                Ok((next_input, Self::MmBinI(a, make_signed(b), c, k)))
             }),
             Some(Opcode::MmBinK) => handle_iabc(input, |next_input, c, b, k, a| {
                 Ok((next_input, Self::MmBinK(a, b, c, k)))
@@ -370,19 +373,19 @@ impl Instruction {
                 Ok((next_input, Self::EqK(a, b, k)))
             }),
             Some(Opcode::EqI) => handle_iabc(input, |next_input, _, b, k, a| {
-                Ok((next_input, Self::EqI(a, b as i8, k)))
+                Ok((next_input, Self::EqI(a, make_signed(b), k)))
             }),
             Some(Opcode::LtI) => handle_iabc(input, |next_input, _, b, k, a| {
-                Ok((next_input, Self::LtI(a, b as i8, k)))
+                Ok((next_input, Self::LtI(a, make_signed(b), k)))
             }),
             Some(Opcode::LeI) => handle_iabc(input, |next_input, _, b, k, a| {
-                Ok((next_input, Self::LeI(a, b as i8, k)))
+                Ok((next_input, Self::LeI(a, make_signed(b), k)))
             }),
             Some(Opcode::GtI) => handle_iabc(input, |next_input, _, b, k, a| {
-                Ok((next_input, Self::GtI(a, b as i8, k)))
+                Ok((next_input, Self::GtI(a, make_signed(b), k)))
             }),
             Some(Opcode::GeI) => handle_iabc(input, |next_input, _, b, k, a| {
-                Ok((next_input, Self::GeI(a, b as i8, k)))
+                Ok((next_input, Self::GeI(a, make_signed(b), k)))
             }),
             Some(Opcode::Test) => handle_iabc(input, |next_input, _, _, k, a| {
                 Ok((next_input, Self::Test(a, k)))
@@ -440,5 +443,60 @@ impl Instruction {
                 code: ErrorKind::Fail,
             })),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Instruction;
+
+    #[test]
+    /// Tests a small subset of different instructions
+    fn test_instruction_parsing() {
+        let data: [u8; 0x64] = [
+            0x51, 0x00, 0x00, 0x00, 0x4F, 0x00, 0x00, 0x00, 0x85, 0x00, 0x00, 0x00, 0x4F, 0x81,
+            0x00, 0x00, 0x95, 0x01, 0x01, 0x80, 0xAF, 0x80, 0x80, 0x06, 0xC2, 0x01, 0x00, 0x00,
+            0x38, 0x00, 0x00, 0x80, 0x81, 0x81, 0x02, 0x80, 0x83, 0x01, 0x00, 0x00, 0x00, 0x02,
+            0x00, 0x00, 0x83, 0x82, 0x00, 0x00, 0x01, 0x83, 0x00, 0x80, 0x81, 0x03, 0x01, 0x80,
+            0x01, 0x84, 0x01, 0x80, 0x81, 0x04, 0x02, 0x80, 0x05, 0x05, 0x00, 0x00, 0x87, 0x05,
+            0x00, 0x00, 0x13, 0x06, 0x00, 0x00, 0x52, 0x00, 0x00, 0x00, 0x83, 0x06, 0x01, 0x00,
+            0x44, 0x02, 0x0A, 0x01, 0x4F, 0x02, 0x01, 0x00, 0x0F, 0x00, 0x03, 0x04, 0x46, 0x02,
+            0x01, 0x01,
+        ];
+        let mut iter = &data[..];
+        let mut parsed_instructions = Vec::new();
+        let instructions = vec![
+            Instruction::VarargPrep(0),
+            Instruction::Closure(0, 0),
+            Instruction::LoadFalse(1),
+            Instruction::Closure(2, 1),
+            Instruction::AddI(3, 1, 1),
+            Instruction::MmBinI(1, 1, 6, 1),
+            Instruction::Test(3, 0),
+            Instruction::Jmp(1),
+            Instruction::LoadI(3, 6),
+            Instruction::LoadK(3, 0),
+            Instruction::Move(4, 0),
+            Instruction::LoadK(5, 1),
+            Instruction::LoadI(6, 2),
+            Instruction::LoadI(7, 3),
+            Instruction::LoadI(8, 4),
+            Instruction::LoadI(9, 5),
+            Instruction::LoadFalse(10),
+            Instruction::LoadTrue(11),
+            Instruction::NewTable(12, 0, 0, 0),
+            Instruction::Extraarg(0),
+            Instruction::LoadK(13, 2),
+            Instruction::Call(4, 10, 1),
+            Instruction::Closure(4, 2),
+            Instruction::SetTabup(0, 3, 4),
+            Instruction::Return(4, 1, 1, 0),
+        ];
+
+        while let Ok((next_iter, instruction)) = Instruction::parse(iter) {
+            parsed_instructions.push(instruction);
+            iter = next_iter;
+        }
+        assert_eq!(parsed_instructions, instructions);
     }
 }

@@ -50,46 +50,46 @@ pub enum InstructionEncoding {
 impl InstructionEncoding {
     // Parser for iABC
     pub fn parse_iabc(input: &[u8]) -> IResult<&[u8], Self> {
-        map(le_u32, |instrucion_encoded| InstructionEncoding::IABC {
-            c: (instrucion_encoded >> 24) as u8,
-            b: (instrucion_encoded >> 16) as u8,
-            k: ((instrucion_encoded >> 15) & 0x1) as u8,
-            a: (instrucion_encoded >> 7) as u8,
-            opcode: (instrucion_encoded & 0x7f) as u8,
+        map(le_u32, |instruction_encoded| InstructionEncoding::IABC {
+            c: (instruction_encoded >> 24) as u8,
+            b: (instruction_encoded >> 16) as u8,
+            k: ((instruction_encoded >> 15) & 0x1) as u8,
+            a: (instruction_encoded >> 7) as u8,
+            opcode: (instruction_encoded & 0x7f) as u8,
         })(input)
     }
 
     // Parser for iABx
     pub fn parse_iabx(input: &[u8]) -> IResult<&[u8], Self> {
-        map(le_u32, |instrucion_encoded| InstructionEncoding::IABx {
-            bx: instrucion_encoded >> 15,
-            a: (instrucion_encoded >> 7) as u8,
-            opcode: (instrucion_encoded & 0x7f) as u8,
+        map(le_u32, |instruction_encoded| InstructionEncoding::IABx {
+            bx: instruction_encoded >> 15,
+            a: (instruction_encoded >> 7) as u8,
+            opcode: (instruction_encoded & 0x7f) as u8,
         })(input)
     }
 
     // Parser for iAsBx
     pub fn parse_iasbx(input: &[u8]) -> IResult<&[u8], Self> {
-        map(le_u32, |instrucion_encoded| InstructionEncoding::IAsBx {
-            sbx: (instrucion_encoded >> 15) as i32 - 0x1ffff,
-            a: (instrucion_encoded >> 7) as u8,
-            opcode: (instrucion_encoded & 0x7f) as u8,
+        map(le_u32, |instruction_encoded| InstructionEncoding::IAsBx {
+            sbx: (instruction_encoded >> 15) as i32 - 0xffff,
+            a: (instruction_encoded >> 7) as u8,
+            opcode: (instruction_encoded & 0x7f) as u8,
         })(input)
     }
 
     // Parser for iAx
     pub fn parse_iax(input: &[u8]) -> IResult<&[u8], Self> {
-        map(le_u32, |instrucion_encoded| InstructionEncoding::IAx {
-            ax: (instrucion_encoded >> 7),
-            opcode: (instrucion_encoded & 0x7f) as u8,
+        map(le_u32, |instruction_encoded| InstructionEncoding::IAx {
+            ax: (instruction_encoded >> 7),
+            opcode: (instruction_encoded & 0x7f) as u8,
         })(input)
     }
 
     // Parser for isJ
     pub fn parse_isj(input: &[u8]) -> IResult<&[u8], Self> {
-        map(le_u32, |instrucion_encoded| InstructionEncoding::IsJ {
-            sj: (instrucion_encoded >> 7) as i32 - 0x1ffffff,
-            opcode: (instrucion_encoded & 0x7f) as u8,
+        map(le_u32, |instruction_encoded| InstructionEncoding::IsJ {
+            sj: (instruction_encoded >> 7) as i32 - 0xffffff,
+            opcode: (instruction_encoded & 0x7f) as u8,
         })(input)
     }
 }
