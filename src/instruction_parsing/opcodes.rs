@@ -32,7 +32,7 @@ pub enum Opcode {
     IDivK,      /* A B C   R[A] := R[B] // K[C]:number                     */
     BAndK,      /* A B C   R[A] := R[B] & K[C]:integer                     */
     BOrK,       /* A B C   R[A] := R[B] | K[C]:integer                     */
-    BXork,      /* A B C   R[A] := R[B] ~ K[C]:integer                     */
+    BXorK,      /* A B C   R[A] := R[B] ~ K[C]:integer                     */
     ShrI,       /* A B sC  R[A] := R[B] >> sC                              */
     ShlI,       /* A B sC  R[A] := sC << R[B]                              */
     Add,        /* A B C   R[A] := R[B] + R[C]                             */

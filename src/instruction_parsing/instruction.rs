@@ -35,7 +35,7 @@ pub enum Instruction {
     IDivK(u8, u8, u8),        /* A B C   R[A] := R[B] // K[C]:number                     */
     BAndK(u8, u8, u8),        /* A B C   R[A] := R[B] & K[C]:integer                     */
     BOrK(u8, u8, u8),         /* A B C   R[A] := R[B] | K[C]:integer                     */
-    BXork(u8, u8, u8),        /* A B C   R[A] := R[B] ~ K[C]:integer                     */
+    BXorK(u8, u8, u8),        /* A B C   R[A] := R[B] ~ K[C]:integer                     */
     ShrI(u8, u8, i8),         /* A B sC  R[A] := R[B] >> sC                              */
     ShlI(u8, u8, i8),         /* A B sC  R[A] := sC << R[B]                              */
     Add(u8, u8, u8),          /* A B C   R[A] := R[B] + R[C]                             */
@@ -209,6 +209,87 @@ impl Instruction {
             }),
             Some(Opcode::SetField) => handle_iabc(input, |next_input, c, b, _, a| {
                 Ok((next_input, Self::SetField(a, b, c)))
+            }),
+            Some(Opcode::NewTable) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::NewTable(a, b, c, k)))
+            }),
+            Some(Opcode::Self_) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Self_(a, b, c)))
+            }),
+            Some(Opcode::AddI) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::AddI(a, b, c as i8)))
+            }),
+            Some(Opcode::AddK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::AddK(a, b, c)))
+            }),
+            Some(Opcode::SubK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::SubK(a, b, c)))
+            }),
+            Some(Opcode::MulK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::MulK(a, b, c)))
+            }),
+            Some(Opcode::ModK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::ModK(a, b, c)))
+            }),
+            Some(Opcode::PowK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::PowK(a, b, c)))
+            }),
+            Some(Opcode::DivK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::DivK(a, b, c)))
+            }),
+            Some(Opcode::IDivK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::IDivK(a, b, c)))
+            }),
+            Some(Opcode::BAndK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BAndK(a, b, c)))
+            }),
+            Some(Opcode::BOrK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BOrK(a, b, c)))
+            }),
+            Some(Opcode::BXorK) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BXorK(a, b, c)))
+            }),
+            Some(Opcode::ShrI) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::ShrI(a, b, c as i8)))
+            }),
+            Some(Opcode::ShlI) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::ShlI(a, b, c as i8)))
+            }),
+            Some(Opcode::Add) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Add(a, b, c)))
+            }),
+            Some(Opcode::Sub) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Sub(a, b, c)))
+            }),
+            Some(Opcode::Mul) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Mul(a, b, c)))
+            }),
+            Some(Opcode::Mod) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Mod(a, b, c)))
+            }),
+            Some(Opcode::Pow) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Pow(a, b, c)))
+            }),
+            Some(Opcode::Div) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Div(a, b, c)))
+            }),
+            Some(Opcode::IDiv) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::IDiv(a, b, c)))
+            }),
+            Some(Opcode::BAnd) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BAnd(a, b, c)))
+            }),
+            Some(Opcode::BOr) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BOr(a, b, c)))
+            }),
+            Some(Opcode::BXor) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::BXor(a, b, c)))
+            }),
+            Some(Opcode::Shr) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Shr(a, b, c)))
+            }),
+            Some(Opcode::Shl) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Shl(a, b, c)))
             }),
             _ => Err(nom::Err::Failure(nom::error::Error {
                 input,
