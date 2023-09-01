@@ -3,6 +3,7 @@ use nom::{error::ErrorKind, IResult, Needed};
 use super::{instruction_encodings::InstructionEncoding, opcodes::Opcode};
 
 // All VM instructions
+#[derive(Debug)]
 pub enum Instruction {
     Move(u8, u8),             /* A B     R[A] := R[B]                                    */
     LoadI(u8, i32),           /* A sBx   R[A] := sBx                                     */
@@ -53,14 +54,14 @@ pub enum Instruction {
     MmBin(u8, u8, u8),        /* A B C   call C metamethod over R[A] and R[B]    (*)     */
     MmBinI(u8, i8, u8, u8),   /* A sB C k        call C metamethod over R[A] and sB      */
     MmBinK(u8, u8, u8, u8),   /* A B C k         call C metamethod over R[A] and K[B]    */
-    Unm(u8, u8, u8),          /* A B     R[A] := -R[B]                                   */
+    Unm(u8, u8),              /* A B     R[A] := -R[B]                                   */
     BNot(u8, u8),             /* A B     R[A] := ~R[B]                                   */
     Not(u8, u8),              /* A B     R[A] := not R[B]                                */
     Len(u8, u8),              /* A B     R[A] := #R[B] (length operator)                 */
     Concat(u8, u8),           /* A B     R[A] := R[A].. ... ..R[A + B - 1]               */
     Close(u8),                /* A       close all upvalues >= R[A]                      */
     Tbc(u8),                  /* A       mark variable A "to be closed"                  */
-    Jmp(u8, i32),             /* A J     pc += sJ                                        */
+    Jmp(i32),                 /* A J     pc += sJ                                        */
     Eq(u8, u8, u8),           /* A B k   if ((R[A] == R[B]) ~= k) then pc++              */
     Lt(u8, u8, u8),           /* A B k   if ((R[A] <  R[B]) ~= k) then pc++              */
     Le(u8, u8, u8),           /* A B k   if ((R[A] <= R[B]) ~= k) then pc++              */
@@ -137,6 +138,38 @@ fn handle_iasbx(
     let (next_input, instruction) = InstructionEncoding::parse_iasbx(input)?;
     if let InstructionEncoding::IAsBx { sbx, a, opcode: _ } = instruction {
         f(next_input, sbx, a)
+    } else {
+        Err(nom::Err::Failure(nom::error::Error {
+            input,
+            code: ErrorKind::Fail,
+        }))
+    }
+}
+
+/// A utility function to parse IsJ encoded instructions
+fn handle_isj(
+    input: &[u8],
+    f: impl Fn(&[u8], i32) -> IResult<&[u8], Instruction>,
+) -> IResult<&[u8], Instruction> {
+    let (next_input, instruction) = InstructionEncoding::parse_isj(input)?;
+    if let InstructionEncoding::IsJ { sj, opcode: _ } = instruction {
+        f(next_input, sj)
+    } else {
+        Err(nom::Err::Failure(nom::error::Error {
+            input,
+            code: ErrorKind::Fail,
+        }))
+    }
+}
+
+/// A utility function to parse IAx encoded instructions
+fn handle_iax(
+    input: &[u8],
+    f: impl Fn(&[u8], u32) -> IResult<&[u8], Instruction>,
+) -> IResult<&[u8], Instruction> {
+    let (next_input, instruction) = InstructionEncoding::parse_iax(input)?;
+    if let InstructionEncoding::IAx { ax, opcode: _ } = instruction {
+        f(next_input, ax)
     } else {
         Err(nom::Err::Failure(nom::error::Error {
             input,
@@ -300,6 +333,108 @@ impl Instruction {
             Some(Opcode::MmBinK) => handle_iabc(input, |next_input, c, b, k, a| {
                 Ok((next_input, Self::MmBinK(a, b, c, k)))
             }),
+            Some(Opcode::Unm) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::Unm(a, b)))
+            }),
+            Some(Opcode::BNot) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::BNot(a, b)))
+            }),
+            Some(Opcode::Not) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::Not(a, b)))
+            }),
+            Some(Opcode::Len) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::Len(a, b)))
+            }),
+            Some(Opcode::Concat) => handle_iabc(input, |next_input, _, b, _, a| {
+                Ok((next_input, Self::Concat(a, b)))
+            }),
+            Some(Opcode::Close) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::Close(a)))
+            }),
+            Some(Opcode::Tbc) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::Tbc(a)))
+            }),
+            Some(Opcode::Jmp) => {
+                handle_isj(input, |next_input, sj| Ok((next_input, Self::Jmp(sj))))
+            }
+            Some(Opcode::Eq) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::Eq(a, b, k)))
+            }),
+            Some(Opcode::Lt) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::Lt(a, b, k)))
+            }),
+            Some(Opcode::Le) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::Le(a, b, k)))
+            }),
+            Some(Opcode::EqK) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::EqK(a, b, k)))
+            }),
+            Some(Opcode::EqI) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::EqI(a, b as i8, k)))
+            }),
+            Some(Opcode::LtI) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::LtI(a, b as i8, k)))
+            }),
+            Some(Opcode::LeI) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::LeI(a, b as i8, k)))
+            }),
+            Some(Opcode::GtI) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::GtI(a, b as i8, k)))
+            }),
+            Some(Opcode::GeI) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::GeI(a, b as i8, k)))
+            }),
+            Some(Opcode::Test) => handle_iabc(input, |next_input, _, _, k, a| {
+                Ok((next_input, Self::Test(a, k)))
+            }),
+            Some(Opcode::TestSet) => handle_iabc(input, |next_input, _, b, k, a| {
+                Ok((next_input, Self::TestSet(a, b, k)))
+            }),
+            Some(Opcode::Call) => handle_iabc(input, |next_input, c, b, _, a| {
+                Ok((next_input, Self::Call(a, b, c)))
+            }),
+            Some(Opcode::TailCall) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::TailCall(a, b, c, k)))
+            }),
+            Some(Opcode::Return) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::Return(a, b, c, k)))
+            }),
+            Some(Opcode::Return0) => handle_iabc(input, |next_input, _, _, _, _| {
+                Ok((next_input, Self::Return0()))
+            }),
+            Some(Opcode::Return1) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::Return1(a)))
+            }),
+            Some(Opcode::ForLoop) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::ForLoop(a, bx)))
+            }),
+            Some(Opcode::ForPrep) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::ForPrep(a, bx)))
+            }),
+            Some(Opcode::TForPrep) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::TForPrep(a, bx)))
+            }),
+            Some(Opcode::TForCall) => handle_iabc(input, |next_input, c, _, _, a| {
+                Ok((next_input, Self::TForCall(a, c)))
+            }),
+            Some(Opcode::TForLoop) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::TForLoop(a, bx)))
+            }),
+            Some(Opcode::SetList) => handle_iabc(input, |next_input, c, b, k, a| {
+                Ok((next_input, Self::SetList(a, b, c, k)))
+            }),
+            Some(Opcode::Closure) => handle_iabx(input, |next_input, bx, a| {
+                Ok((next_input, Self::Closure(a, bx)))
+            }),
+            Some(Opcode::Vararg) => handle_iabc(input, |next_input, c, _, _, a| {
+                Ok((next_input, Self::Vararg(a, c)))
+            }),
+            Some(Opcode::VarargPrep) => handle_iabc(input, |next_input, _, _, _, a| {
+                Ok((next_input, Self::VarargPrep(a)))
+            }),
+            Some(Opcode::Extraarg) => {
+                handle_iax(input, |next_input, ax| Ok((next_input, Self::Extraarg(ax))))
+            }
             _ => Err(nom::Err::Failure(nom::error::Error {
                 input,
                 code: ErrorKind::Fail,
