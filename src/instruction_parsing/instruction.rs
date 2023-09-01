@@ -496,10 +496,9 @@ mod tests {
         ];
 
         while let Ok((next_iter, instruction)) = Instruction::parse(iter) {
-            println!("{:?}", instruction);
             parsed_instructions.push(instruction);
             iter = next_iter;
         }
-        // assert_eq!(parsed_instructions, instructions);
+        assert_eq!(parsed_instructions, instructions);
     }
 }
