@@ -1,6 +1,7 @@
 use modular_bitfield::{bitfield, specifiers::{B1, B2, B3}};
 
 use crate::common_structs::constant::LuaConstant;
+use crate::common_structs::upvalue::Upvalue;
 
 #[bitfield(filled=false)]
 pub struct IsVarargFlag {
@@ -17,5 +18,6 @@ pub struct FunctionBlockChunk {
     pub is_vararg: IsVarargFlag,
     pub maximum_stack_size: u8,
     pub instructions: Vec<u8>,
-    pub constants: Vec<LuaConstant>
+    pub constants: Vec<LuaConstant>,
+    pub upvalues: Vec<Upvalue>
 }
