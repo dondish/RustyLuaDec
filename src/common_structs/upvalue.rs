@@ -10,7 +10,7 @@ use num::FromPrimitive;
 use super::variable_kind::VariableKind;
 
 #[derive(Debug, PartialEq)]
-struct Upvalue {
+pub struct Upvalue {
     pub in_stack: bool,
     pub index: u8,
     pub kind: VariableKind,
