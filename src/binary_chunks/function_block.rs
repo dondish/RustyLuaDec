@@ -19,5 +19,6 @@ pub struct FunctionBlockChunk {
     pub maximum_stack_size: u8,
     pub instructions: Vec<u8>,
     pub constants: Vec<LuaConstant>,
-    pub upvalues: Vec<Upvalue>
+    pub upvalues: Vec<Upvalue>,
+    pub protos: Vec<FunctionBlockChunk> 
 }
