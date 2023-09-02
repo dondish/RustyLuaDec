@@ -16,6 +16,6 @@ pub struct FunctionBlockChunk {
     pub number_of_parameters: u8,
     pub is_vararg: IsVarargFlag,
     pub maximum_stack_size: u8,
-    pub instructions: Vec<u32>,
+    pub instructions: Vec<u8>,
     pub constants: Vec<LuaConstant>
 }
