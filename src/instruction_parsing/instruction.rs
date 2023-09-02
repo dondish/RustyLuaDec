@@ -184,6 +184,11 @@ fn make_signed(byte_reg: u8) -> i8 {
 }
 
 impl Instruction {
+    // Parse a u32 representation of an instruction
+    pub fn parse_u32(input: u32) -> Option<Self> {
+        Self::parse(&input.to_le_bytes()).ok().map(|(_, instruction)| instruction)
+    }
+
     /// Parses an instruction
     pub fn parse(input: &[u8]) -> IResult<&[u8], Self> {
         if input.len() < 4 {
