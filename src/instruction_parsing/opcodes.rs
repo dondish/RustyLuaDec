@@ -1,4 +1,4 @@
-#[derive(FromPrimitive)]
+#[derive(FromPrimitive, PartialEq, Debug)]
 // Opcodes in Lua VM
 pub enum Opcode {
     Move,       /* A B     R[A] := R[B]                                    */
