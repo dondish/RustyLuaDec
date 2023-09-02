@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use nom::{
     bytes::complete::tag,
     combinator::map,
@@ -21,6 +23,12 @@ impl From<u8> for HeaderVersion {
             major: value >> 4,
             minor: value & 0xF,
         }
+    }
+}
+
+impl Display for HeaderVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}.{}", self.major, self.minor)
     }
 }
 
