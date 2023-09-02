@@ -1,6 +1,6 @@
 use modular_bitfield::{bitfield, specifiers::{B1, B2, B3}};
 
-use crate::common_structs::constant::LuaConstant;
+use crate::common_structs::{constant::LuaConstant, debug_info::DebugInfo};
 use crate::common_structs::upvalue::Upvalue;
 
 #[bitfield(filled=false)]
@@ -20,5 +20,6 @@ pub struct FunctionBlockChunk {
     pub instructions: Vec<u8>,
     pub constants: Vec<LuaConstant>,
     pub upvalues: Vec<Upvalue>,
-    pub protos: Vec<FunctionBlockChunk> 
+    pub protos: Vec<FunctionBlockChunk>,
+    pub debug_info: Vec<DebugInfo>
 }
