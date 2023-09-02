@@ -18,7 +18,7 @@ impl AbsLineInfo {
 
 #[derive(Debug, PartialEq)]
 pub struct LocalVar {
-    pub name: String,
+    pub name: Option<String>,
     pub start_pc: u64,
     pub end_pc: u64,
 }
@@ -40,7 +40,7 @@ pub struct DebugInfo {
     pub line_info: Vec<i8>,
     pub abs_line_info: Vec<AbsLineInfo>,
     pub local_vars: Vec<LocalVar>,
-    pub upvalue_names: Vec<String>,
+    pub upvalue_names: Vec<Option<String>>,
 }
 
 impl DebugInfo {
@@ -85,7 +85,7 @@ mod tests {
         assert_eq!(
             local_var_res.unwrap().1,
             LocalVar {
-                name: "r".to_string(),
+                name: Some("r".to_string()),
                 start_pc: 2,
                 end_pc: 192
             }
@@ -105,7 +105,7 @@ mod tests {
                 line_info: vec![1, 0, 0, 0, 0, 0, 1],
                 abs_line_info: vec![],
                 local_vars: vec![],
-                upvalue_names: vec!["x".to_string()],
+                upvalue_names: vec![Some("x".to_string())],
             }
         )
     }

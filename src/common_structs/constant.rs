@@ -26,7 +26,11 @@ impl LuaConstant {
             0x1 => Ok((input, LuaConstant::Boolean(false))),
             0x3 => map(le_i64, LuaConstant::Integer)(input),
             0x4 | 0x14 => map(lua_string_utf8, |string_data| {
-                LuaConstant::String(string_data)
+                if let Some(string_data) = string_data {
+                    LuaConstant::String(string_data)
+                } else {
+                    LuaConstant::Nil
+                }
             })(input),
             0x11 => Ok((input, LuaConstant::Boolean(true))),
             0x13 => map(le_f64, LuaConstant::Number)(input),
