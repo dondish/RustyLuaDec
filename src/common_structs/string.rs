@@ -11,9 +11,21 @@ use super::size_t::lua_size_t;
  */
 pub fn lua_string(input: &[u8]) -> IResult<&[u8], Option<&[u8]>> {
     flat_map(
-        lua_size_t, // First parse the size
-        lua_string_data,                     // parse the string data
+        lua_size_t,      // First parse the size
+        lua_string_data, // parse the string data
     )(input)
+}
+
+/**
+ * Parses a UTF-8 encoded lua string
+ */
+pub fn lua_string_utf8(input: &[u8]) -> IResult<&[u8], String> {
+    map(lua_string, |utf_lossy| {
+        utf_lossy.map_or_else(
+            || "".to_string(),  // Map None to ""
+            |lossy_data| String::from_utf8_lossy(lossy_data).to_string(),  // Parse UTF-8 data
+        )
+    })(input)
 }
 
 fn lua_string_data(size: u64) -> impl FnMut(&[u8]) -> IResult<&[u8], Option<&[u8]>> {
