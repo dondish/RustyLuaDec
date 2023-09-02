@@ -5,7 +5,7 @@ use nom::{
     IResult,
 };
 
-use super::string::lua_string;
+use super::string::lua_string_utf8;
 
 /// A constant in the function block binary chunk
 pub enum LuaConstant {
@@ -13,7 +13,7 @@ pub enum LuaConstant {
     Boolean(bool),
     Number(f64),
     Integer(i64),
-    String(Option<String>),
+    String(String),
 }
 
 impl LuaConstant {
@@ -24,10 +24,8 @@ impl LuaConstant {
             0x0 => Ok((input, LuaConstant::Nil)),
             0x1 => Ok((input, LuaConstant::Boolean(false))),
             0x3 => map(le_i64, LuaConstant::Integer)(input),
-            0x4 | 0x14 => map(lua_string, |str_bytes_opt| {
-                LuaConstant::String(
-                    str_bytes_opt.map(|input| String::from_utf8_lossy(input).to_string()),
-                )
+            0x4 | 0x14 => map(lua_string_utf8, |string_data| {
+                LuaConstant::String(string_data)
             })(input),
             0x11 => Ok((input, LuaConstant::Boolean(true))),
             0x13 => map(le_f64, LuaConstant::Number)(input),
