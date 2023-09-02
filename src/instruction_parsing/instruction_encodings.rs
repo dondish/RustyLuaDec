@@ -93,3 +93,95 @@ impl InstructionEncoding {
         })(input)
     }
 }
+
+#[cfg(test)]
+mod tests {
+
+    use super::InstructionEncoding;
+    use crate::instruction_parsing::opcodes::Opcode;
+
+    #[test]
+    fn test_parse_abc() {
+        let data: [u8; 0x04] = [0x0F, 0x80, 0x01, 0x02];
+        if let (_, InstructionEncoding::IABC { c, b, k, a, opcode }) =
+            InstructionEncoding::parse_iabc(&data[..]).unwrap()
+        {
+            assert_eq!(opcode, Opcode::SetTabup as u8);
+            assert_eq!(a, 0);
+            assert_eq!(b, 1);
+            assert_eq!(c, 2);
+            assert_eq!(k, 1);
+        } else {
+            assert!(
+                false,
+                "parse_iabc should not return an Ok value with another encoding"
+            )
+        }
+    }
+
+    #[test]
+    fn test_parse_abx() {
+        let data: [u8; 0x04] = [0x4A, 0x07, 0x00, 0x00];
+        if let (_, InstructionEncoding::IABx { bx, a, opcode }) =
+            InstructionEncoding::parse_iabx(&data[..]).unwrap()
+        {
+            assert_eq!(opcode, Opcode::ForPrep as u8);
+            assert_eq!(a, 0xe);
+            assert_eq!(bx, 0);
+        } else {
+            assert!(
+                false,
+                "parse_iabx should not return an Ok value with another encoding"
+            )
+        }
+    }
+
+    #[test]
+    fn test_parse_asbx() {
+        let data: [u8; 0x04] = [0x01, 0x80, 0xFF, 0x7F];
+        if let (_, InstructionEncoding::IAsBx { sbx, a, opcode }) =
+            InstructionEncoding::parse_iasbx(&data[..]).unwrap()
+        {
+            assert_eq!(opcode, Opcode::LoadI as u8);
+            assert_eq!(a, 0);
+            assert_eq!(sbx, 0);
+        } else {
+            assert!(
+                false,
+                "parse_iasbx should not return an Ok value with another encoding"
+            )
+        }
+    }
+
+    #[test]
+    fn test_parse_ax() {
+        let data: [u8; 0x04] = [0x52, 0x00, 0x00, 0x00];
+        if let (_, InstructionEncoding::IAx { ax, opcode }) =
+            InstructionEncoding::parse_iax(&data[..]).unwrap()
+        {
+            assert_eq!(opcode, Opcode::Extraarg as u8);
+            assert_eq!(ax, 0);
+        } else {
+            assert!(
+                false,
+                "parse_iax should not return an Ok value with another encoding"
+            )
+        }
+    }
+
+    #[test]
+    fn test_parse_sj() {
+        let data: [u8; 0x04] = [0x38, 0x00, 0x00, 0x80];
+        if let (_, InstructionEncoding::IsJ { sj, opcode }) =
+            InstructionEncoding::parse_isj(&data[..]).unwrap()
+        {
+            assert_eq!(opcode, Opcode::Jmp as u8);
+            assert_eq!(sj, 1);
+        } else {
+            assert!(
+                false,
+                "parse_isj should not return an Ok value with another encoding"
+            )
+        }
+    }
+}
