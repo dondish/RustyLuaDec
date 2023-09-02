@@ -7,6 +7,7 @@ use nom::{
 
 use super::string::lua_string_utf8;
 
+#[derive(Debug, PartialEq)]
 /// A constant in the function block binary chunk
 pub enum LuaConstant {
     Nil,
